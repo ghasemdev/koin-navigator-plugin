@@ -1,0 +1,43 @@
+<!-- Plugin Configuration File. Read more: https://plugins.jetbrains.com/docs/intellij/plugin-configuration-file.html -->
+<idea-plugin>
+    <!-- Unique identifier of the plugin. It should be FQN. It cannot be changed between the plugin versions. -->
+    <id>com.parsuomash.koin-navigator</id>
+
+    <!-- Public plugin name should be written in Title Case.
+         Guidelines: https://plugins.jetbrains.com/docs/marketplace/plugin-overview-page.html#plugin-name -->
+    <name>Koin Dependency Navigator</name>
+
+    <!-- A displayed Vendor name or Organization ID displayed on the Plugins Page. -->
+    <vendor email="shirdelghasem79@gmail.com" url="https://www.parsuomash.com">parsuomash</vendor>
+
+    <!-- Description of the plugin displayed on the Plugin Page and IDE Plugin Manager.
+         Simple HTML elements (text formatting, paragraphs, and lists) can be added inside of <![CDATA[ ]]> tag.
+         Guidelines: https://plugins.jetbrains.com/docs/marketplace/plugin-overview-page.html#plugin-description -->
+    <description><![CDATA[
+    <strong>Koin Dependency Navigator</strong><br>
+    The Koin Dependency Navigator plugin enhances your development experience by providing seamless navigation between dependencies in your Kotlin projects using Koin. This plugin automatically identifies and highlights Koin dependency injection calls, allowing you to quickly jump to the corresponding providers within your project.<br><br>
+    <strong>Key Features:</strong><br>
+    - <em>Automatic Detection</em>: Identifies <code>inject</code> and <code>get</code> calls from Koin throughout your code, including inside functions and properties.<br>
+    - <em>Quick Navigation</em>: Adds intuitive line markers next to dependency injection calls, enabling you to navigate directly to the Koin module definitions and factory providers.<br>
+    - <em>Enhanced Productivity</em>: Simplifies tracking and managing dependencies in large Kotlin projects using Koin.<br><br>
+    <strong>How It Works:</strong><br>
+    - The plugin scans your project for Koin <code>get</code> and <code>inject</code> function calls.<br>
+    - It places a navigation icon next to these calls in the editor.<br>
+    - Clicking the icon takes you directly to the relevant provider in the Koin module.<br><br>
+    Enhance your productivity and streamline your dependency management with the Koin Dependency Navigator plugin!
+]]></description>
+
+    <!-- Product and plugin compatibility requirements.
+         Read more: https://plugins.jetbrains.com/docs/intellij/plugin-compatibility.html -->
+    <depends>com.intellij.modules.platform</depends>
+    <depends>com.intellij.modules.lang</depends>
+    <depends>org.jetbrains.kotlin</depends>
+
+    <!-- Extension points defined by the plugin.
+         Read more: https://plugins.jetbrains.com/docs/intellij/plugin-extension-points.html -->
+    <extensions defaultExtensionNs="com.intellij">
+        <codeInsight.lineMarkerProvider
+                language="kotlin"
+                implementationClass="com.parsuomash.koin_navigator.KoinLineMarkerProvider"/>
+    </extensions>
+</idea-plugin>
