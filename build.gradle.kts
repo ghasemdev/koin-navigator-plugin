@@ -45,8 +45,8 @@ tasks {
     }
 
     signPlugin {
-        certificateChain.set(System.getenv("CERTIFICATE_CHAIN"))
-        privateKey.set(System.getenv("PRIVATE_KEY"))
+        certificateChainFile.set(file("\\\\wsl.localhost\\Ubuntu\\home\\jakode/chain.crt"))
+        privateKeyFile.set(file("\\\\wsl.localhost\\Ubuntu\\home\\jakode/private.pem"))
         password.set(System.getenv("PRIVATE_KEY_PASSWORD"))
     }
 
