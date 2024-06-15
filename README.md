@@ -1,6 +1,6 @@
-**Koin Dependency Navigator**
+**Koin Navigator Plugin**
 
-The Koin Dependency Navigator plugin enhances your development experience by providing seamless navigation between dependencies in your Kotlin projects using Koin. This plugin automatically identifies and highlights Koin dependency injection calls, allowing you to quickly jump to the corresponding providers within your project.
+The Koin Navigator plugin enhances your development experience by providing seamless navigation between dependencies in your Kotlin projects using Koin. This plugin automatically identifies and highlights Koin dependency injection calls, allowing you to quickly jump to the corresponding providers within your project.
 
 **Key Features:**
 
