@@ -53,23 +53,29 @@ class KoinLineMarkerProvider : LineMarkerProvider {
                     val genericType = typeArgument?.toString() ?: "Unknown"
                     var qualifier = "|DEFAULT|"
 
-                    for ((key, value) in resolvedCall.valueArguments.entries) {
-                        if (key.fqNameSafe.asString() == "org.koin.core.component.inject.qualifier") {
-                            qualifier = value.toString()
-                                .replace("qualifier", "")
-                                .replace("named", "")
-                            break
+                    if (genericType !in listOf("Application", "Context", "SavedStateHandle")) {
+                        for ((key, value) in resolvedCall.valueArguments.entries) {
+                            if (key.fqNameSafe.asString() in listOf(
+                                    "org.koin.core.component.inject.qualifier",
+                                    "org.koin.android.ext.android.inject.qualifier"
+                                )
+                            ) {
+                                qualifier = value.toString()
+                                    .replace("qualifier", "")
+                                    .replace("named", "")
+                                break
+                            }
                         }
+                        return LineMarkerInfo(
+                            element,
+                            element.textRange,
+                            KoinIcons.NAVIGATOR,
+                            { "Navigate to $genericType provider" },
+                            { _, _ -> navigateToProvider(element, genericType, qualifier) },
+                            GutterIconRenderer.Alignment.RIGHT,
+                            { "" }
+                        )
                     }
-                    return LineMarkerInfo(
-                        element,
-                        element.textRange,
-                        KoinIcons.NAVIGATOR,
-                        { "Navigate to $genericType provider" },
-                        { _, _ -> navigateToProvider(element, genericType, qualifier) },
-                        GutterIconRenderer.Alignment.RIGHT,
-                        { "" }
-                    )
                 }
             }
         }
