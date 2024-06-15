@@ -1,7 +1,7 @@
-.idea
-.kotlin
-.run
-.gradle
+.idea/
+.kotlin/
+.run/
+.gradle/
 build/
 !gradle/wrapper/gradle-wrapper.jar
 !**/src/main/**/build/
