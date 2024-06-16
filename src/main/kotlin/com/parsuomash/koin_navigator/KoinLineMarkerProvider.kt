@@ -4,10 +4,10 @@ import com.intellij.codeInsight.daemon.LineMarkerInfo
 import com.intellij.codeInsight.daemon.LineMarkerProvider
 import com.intellij.openapi.editor.markup.GutterIconRenderer
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiManager
+import com.parsuomash.koin_navigator.utils.CacheHandler
 import com.parsuomash.koin_navigator.utils.KoinIcons
+import com.parsuomash.koin_navigator.utils.fileCache
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtFile
@@ -22,6 +22,8 @@ import org.jetbrains.kotlin.utils.IDEAPluginsCompatibilityAPI
  * Provides line markers for Koin inject function calls.
  */
 class KoinLineMarkerProvider : LineMarkerProvider {
+    private var cacheHandler: CacheHandler? = null
+
     /**
      * Returns a line marker info for the given element if it is a Koin inject function call.
      *
@@ -30,6 +32,7 @@ class KoinLineMarkerProvider : LineMarkerProvider {
      */
     @OptIn(IDEAPluginsCompatibilityAPI::class)
     override fun getLineMarkerInfo(element: PsiElement): LineMarkerInfo<*>? {
+        if (cacheHandler == null) cacheHandler = CacheHandler(element.project)
         if (element !is KtCallExpression) return null
 
         val callExpression = element.calleeExpression ?: return null
@@ -64,47 +67,43 @@ class KoinLineMarkerProvider : LineMarkerProvider {
             { "" }
         )
     }
-}
 
-/**
- * Navigate to the provider definition.
- */
-private fun navigateToProvider(element: KtCallExpression, genericType: String, qualifier: String) {
-    // Here we need to find the module definition and navigate to the appropriate single/singleOf call
-    val project = element.project
-    val ktFiles = collectKtFiles(project)
+    /**
+     * Navigate to the provider definition.
+     */
+    private fun navigateToProvider(element: KtCallExpression, genericType: String, qualifier: String) {
+        // Here we need to find the module definition and navigate to the appropriate single/singleOf call
+        val project = element.project
 
-    for (ktFile in ktFiles) {
-        if (navigateInFile(ktFile, genericType, qualifier)) break
-    }
-}
-
-private fun collectKtFiles(project: Project): List<KtFile> {
-    val ktFiles = mutableListOf<KtFile>()
-    val psiManager = PsiManager.getInstance(project)
-    val projectFileIndex = ProjectFileIndex.getInstance(project)
-
-    projectFileIndex.iterateContent { virtualFile ->
-        if (virtualFile.extension == "kt") {
-            val psiFile = psiManager.findFile(virtualFile)
-            if (psiFile is KtFile) {
-                ktFiles.add(psiFile)
-            }
+        for (ktFile in collectKtFiles(project)) {
+            if (navigateInFile(ktFile, genericType, qualifier)) break
         }
-        true
     }
 
-    return ktFiles
+    private fun collectKtFiles(project: Project): List<KtFile> {
+        val cacheKey = project.name
+        return fileCache[cacheKey] ?: cacheHandler!!.updateCache().also {
+            fileCache[cacheKey] = it
+        }
+    }
 }
 
 @OptIn(IDEAPluginsCompatibilityAPI::class)
-private fun navigateInFile(ktFile: KtFile, genericType: String, qualifier: String): Boolean {
+private fun navigateInFile(
+    ktFile: KtFile,
+    genericType: String,
+    qualifier: String
+): Boolean {
     var isProviderDetected = false
 
     ktFile.accept(object : KtTreeVisitorVoid() {
         override fun visitCallExpression(expression: KtCallExpression) {
             super.visitCallExpression(expression)
+
             val resolvedCall = expression.getResolvedCall(expression.analyze(PARTIAL)) ?: return
+
+            if (!isInsideModuleDSL(expression)) return
+
             val callableDescriptor = resolvedCall.resultingDescriptor
             val fqName = callableDescriptor.fqNameSafe.asString()
 
@@ -120,6 +119,17 @@ private fun navigateInFile(ktFile: KtFile, genericType: String, qualifier: Strin
     })
 
     return isProviderDetected
+}
+
+private fun isInsideModuleDSL(expression: KtCallExpression): Boolean {
+    var parent = expression.parent
+    while (parent != null) {
+        if (parent is KtCallExpression && parent.calleeExpression?.text == "module") {
+            return true
+        }
+        parent = parent.parent
+    }
+    return false
 }
 
 private fun checkAndNavigate(resolvedCall: ResolvedCall<*>, expression: KtCallExpression, qualifier: String): Boolean {
@@ -149,7 +159,7 @@ private fun String.extractQualifier(): String {
     val qualifier = this
         .replace("{", "")
         .replace("}", "")
-        .split("\n")
+        .splitByLine()
         .find { it.contains("qualifier") || it.contains("named") }
 
     return qualifier?.trim()
@@ -157,6 +167,8 @@ private fun String.extractQualifier(): String {
         ?.replace("named", "")
         ?: "|DEFAULT|"
 }
+
+private fun String.splitByLine(): List<String> = split("\n")
 
 private val koinInjectFqNames = listOf(
     "org.koin.core.component.inject", // inject in body of normal class
